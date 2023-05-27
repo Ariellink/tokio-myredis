@@ -102,7 +102,7 @@ async fn main() {
 }
 ```
 
-##await
+## await
 1. await有点类似于递归出口，函数A如果是异步函数，使用await()才会开始运行，
 2. 函数A中的代码块执行到await()时，函数A挂起。main继续往下执行。等到A中的await执行完了，
 
