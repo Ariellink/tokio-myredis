@@ -25,15 +25,16 @@ tokio中的I/O接口和std在使用方式上没有差别，但是std是同步的
 
     </br>
 
-    ### 为什么要在堆上分配缓冲区
-    > 一个数据如果想在 .await 调用过程中存在，那它必须存储在当前任务内。在我们的代码中，buf 会在 .await 调用过程中被使用，因此它必须要存储在任务内。
-    > 当任务因为调度在线程间移动时，存储在栈上的数据需要进行保存和恢复，过大的栈上变量会带来不小的数据拷贝开销。因此，存储大量数据的变量最好放到堆上。
-    
-    </br>
+### 为什么要在堆上分配缓冲区
+A stack buffer is explicitly avoided. [link](https://tokio.rs/tokio/tutorial/spawning#send-bound) Tasks spawned by tokio::spawn must implement Send. This allows the Tokio runtime to move the tasks between threads while they are suspended at an `.await.` When .await is called, the task yields back to the scheduler. The next time the task is executed, it resumes from the point it last yielded. **To make this work, all state that is used `after` .await must be saved by the task.**
 
-    ## Echo_server
-    client.rs 使用io::copy and io::split
-    ```rust
+> We noted that all task data that lives across calls to `.await` must be stored by the task.In this case, buf is used across `.await` calls. All task data is stored in a single allocation. You can think of it as an enum where each variant is the data that needs to be stored for a specific call to `.await`.  
+> 一个数据如果想在 .await 调用过程中存在，那它必须存储在当前任务内。在我们的代码中，buf 会在 .await 调用过程中被使用，因此它必须要存储在任务内。当任务因为调度在线程间移动时，存储在栈上的数据需要进行保存和恢复，过大的栈上变量会带来不小的数据拷贝开销。因此，存储大量数据的变量最好放到堆上。
+ </br>
+
+## Echo_server  
+client.rs 使用io::copy and io::split  
+```rust
     use tokio::io::{self, AsyncWriteExt, AsyncReadExt};
     use tokio::net::TcpStream;
 
@@ -69,11 +70,11 @@ tokio中的I/O接口和std在使用方式上没有差别，但是std是同步的
         }
         Ok(())
     }
-    ```
+```
 
-    server.rs 
+server.rs
 
-    ```rust
+```rust
     use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
     use tokio::fs::File;
     use tokio::net::TcpListener;
@@ -112,7 +113,7 @@ tokio中的I/O接口和std在使用方式上没有差别，但是std是同步的
             });
         }
     }
-    ```
+```
 
-    *reference: * 
-    https://course.rs/advance-practice/io.html#%E4%BD%BF%E7%94%A8-iocopy
+*reference: * 
+https://course.rs/advance-practice/io.html#%E4%BD%BF%E7%94%A8-iocopy
