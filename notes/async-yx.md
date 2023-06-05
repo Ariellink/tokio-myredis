@@ -255,34 +255,68 @@ impl Future for MyFuture {
 }
 ```
 
-改正：
+#### 改正：  
+- future1.await时，异步运行时第一次进来poll这个myfuture。时间不到exp_time，发现需要等待时，  
+- 将`waker`克隆并丢一个thread出去等sleep，第一次的poll返回pending,开始执行read_file2。thread中sleep到时间时waker被call,异步运行时第二次进来poll Myfuture,发现时间已经到exp_time,返回Ready。
 ```rust
 use std::future::Future;
+use std::pin::Pin;
+use std::task::{Poll, Context};
 use std::thread;
+use std::time::{Instant, Duration};
+use chrono::{Utc};
 
 struct MyFuture {
-    expiration_time: Instant;
-};
+    expiration_time: Instant,
+}
 
 impl Future for MyFuture {
     type Output = String;
-    fn poll(self: Pin<&mut Self>, cx: Context<'_>) -> Poll<Self::Output> {
-        let cur_time = Instant::now();
-        
-        if cur_time >= self.time_out {
-            Poll::Ready(String::from("MyFuture has been timeout"))
+    
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {        
+        if Instant::now() >= self.expiration_time {
+            println!("Hello, it is the time for furture 1");
+            Poll::Ready(String::from("future 1 has completed."))
         } else {
-                    let waker = cx.waker().clone;
-                    let expiration_time = self.expiration_time;
-                    thread::spawn (move || {
-                        let cur_time = Instant::now();
-                        if current_time <　expiration_time {　
-                            thread::sleep(expiration_time - cur_tim));
-                        }
-                        
-                    });
+                println!("Hello, it is not yet the time for furture 1. Going to sleep.");
+                let waker = cx.waker().clone();
+                let expiration_time = self.expiration_time;
+                //spawn a non-blocking thread 
+                thread::spawn (move || {
+                    let cur_time = Instant::now();
+                    if cur_time < expiration_time { 
+                        thread::sleep(expiration_time - cur_time);
+                    }  
+                    waker.wake();
+                });
+                Poll::Pending
                 }   
             }
     }   
-}
+
+    async fn read_file2() -> String {
+        println!("file2 pre-work...{:?}", Utc::now());
+        thread::sleep(Duration::new(2, 0));
+        println!( "Processing file 2 {:?}", Utc::now());   
+        String::from("Hello, there from file 2.")
+    }
+
+    #[tokio::main()]
+    async fn main() {
+        let h1 = tokio::spawn(async {
+            let future1 = MyFuture {
+                expiration_time: Instant::now() + Duration::from_millis(4000),
+            };
+            println!("{:?}", future1.await);
+        });
+
+        let h2 = tokio::spawn(async {
+            let future2 = read_file2().await;
+            println!("{:?}", future2);
+        });
+        let _ = tokio::join!(h1, h2);
+    }
+
+
+
 ```
