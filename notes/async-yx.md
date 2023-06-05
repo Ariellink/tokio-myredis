@@ -255,6 +255,7 @@ impl Future for MyFuture {
 }
 ```
 
+<<<<<<< HEAD
 #### 改正：  
 - future1.await时，异步运行时第一次进来poll这个myfuture。时间不到exp_time，发现需要等待时，  
 - 将`waker`克隆并丢一个thread出去等sleep，第一次的poll返回pending,开始执行read_file2。thread中sleep到时间时waker被call,异步运行时第二次进来poll Myfuture,发现时间已经到exp_time,返回Ready。
@@ -319,4 +320,36 @@ impl Future for MyFuture {
 
 
 
+=======
+改正：
+```rust
+use std::future::Future;
+use std::thread;
+
+struct MyFuture {
+    expiration_time: Instant;
+};
+
+impl Future for MyFuture {
+    type Output = String;
+    fn poll(self: Pin<&mut Self>, cx: Context<'_>) -> Poll<Self::Output> {
+        let cur_time = Instant::now();
+        
+        if cur_time >= self.time_out {
+            Poll::Ready(String::from("MyFuture has been timeout"))
+        } else {
+                    let waker = cx.waker().clone;
+                    let expiration_time = self.expiration_time;
+                    thread::spawn (move || {
+                        let cur_time = Instant::now();
+                        if current_time <　expiration_time {　
+                            thread::sleep(expiration_time - cur_tim));
+                        }
+                        
+                    });
+                }   
+            }
+    }   
+}
+>>>>>>> d6561c3078a72520d175b0f4d722bc93ad3cd023
 ```
