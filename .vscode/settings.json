@@ -1,6 +1,0 @@
-{
-    "rust-analyzer.linkedProjects": [
-        "./echo-server/Cargo.toml",
-        "./async-yx/Cargo.toml"
-    ]
-}
