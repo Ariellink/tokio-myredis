@@ -41,7 +41,7 @@ pub async fn connect<T: ToSocketAdrs>(addr:T) -> Result<Client> {...}
 1. `asycn fn` 函数不会立即返回值，而是返回一个`Future`.  
 2. `Future` 会在未来某个点被执行，然后最终获取到真正的返回值 `Result<Client>`  
 3. `Future` 需要配合 `await` 才能运行起来。
-4. `await` 只能在 async 函数中使用,执行`await`他会挂起当前异步函数，并将控制权交还给调度器。在 .await 执行期间，任务可能会在线程间转移。因当使用多线程 Future 执行器( executor )时， Future 可能会在线程间被移动，因此 async 语句块中的变量必须要能在线程间传递。此没有实现send的类型要在await之前提前释放掉。
+4. `await` 只能在 async 函数中使用,执行`await`他会挂起外层异步函数，并将控制权交还给调度器。在 .await 执行期间，任务可能会在线程间转移。因当使用多线程 Future 执行器( executor )时， Future 可能会在线程间被移动，因此 async 语句块中的变量必须要能在线程间传递。此没有实现send的类型要在await之前提前释放掉。
 
 
 ### 什么是异步编程？  

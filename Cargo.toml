@@ -18,5 +18,8 @@ path = "examples/hello-redis.rs"
 [workspace]
 members = [
     "echo-server",
+    "future-example",
+    "async-yx",
+    "async-yx-timer-future",
 ]
 
