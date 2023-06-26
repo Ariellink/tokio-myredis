@@ -1,8 +1,16 @@
-use std::future::Future;
-use std::pin::Pin;
-use std::thread;
-use std::time::{Instant, Duration};
-use std::task::{Context, Poll};
+use std::{
+    future::Future,
+    pin::Pin,
+    task::{
+        Context,
+        Poll,
+    },
+    thread,
+    time::{
+        Duration,
+        Instant,
+    },
+};
 
 pub struct Delay {
     pub when: Instant,
@@ -11,14 +19,15 @@ pub struct Delay {
 impl Future for Delay {
     type Output = &'static str;
     //Context: &waker的access
-    //<'_ >代表一个匿名的生命周期注解，这意味着Context中的引用的有效期和调用poll函数时传入的引用的有效期是一致的。
+    //<'_ >代表一个匿名的生命周期注解，
+    //<'_ 这意味着Context中的引用的有效期和调用poll函数时传入的引用的有效期是一致的。
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<&'static str> {
         if Instant::now() >= self.when {
             print!("Hello World");
             Poll::Ready("done")
         } else {
             //为当前任务克隆一个waker的句柄
-            let waker = cx.waker().clone(); 
+            let waker = cx.waker().clone();
             let when = self.when;
             thread::spawn(move || {
                 let now = Instant::now();
@@ -26,10 +35,11 @@ impl Future for Delay {
                 if now < when {
                     thread::sleep(when - now);
                 }
-                //一旦计时结束(该资源已经准备好)，资源会通过 waker.wake() 调用通知执行器我们的任务再次被调度执行了
+                //一旦计时结束(该资源已经准备好)，资源会通过 waker.wake()
+                // 调用通知执行器我们的任务再次被调度执行了
                 waker.wake();
             });
-            
+
             Poll::Pending
         }
     }
@@ -44,7 +54,7 @@ async fn delay(dur: Duration) {
     let notify2 = notify.clone();
 
     thread::spawn(move || {
-        if Instant::now() == when;
+        let now = Instant::now();
 
         if now < when {
             thread::sleep(when - now);
